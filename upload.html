@@ -1,69 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Upload File - VarunDrive</title>
+  <meta charset="UTF-8">
+  <title>Upload File - VarunDrive</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 50px; text-align: center; }
+    .site-title { font-size: 28px; margin: 0 auto 18px; display: block; color: #222; text-decoration: none; }
+    .card { display: block; text-align: left; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); max-width: 420px; margin: 18px auto; }
+    input[type=file] { display: block; margin: 10px 0; }
+    button { padding: 8px 12px; background: #007bff; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    a { color: #007bff; }
+  </style>
 </head>
 <body>
-<h1>Upload File</h1>
 
-<button id="logoutBtn">Logout</button><br/><br/>
+  <a class="site-title" href="index.html">VarunDrive</a>
 
-<input type="file" id="fileInput" /><br/>
-<button id="uploadBtn">Upload</button>
-<p><a href="dashboard.html">Go to Dashboard</a></p>
+  <div class="card">
+    <h2>Upload File</h2>
 
-<script>
-const API_BASE = "https://yn2y9x0yi5.execute-api.us-east-1.amazonaws.com/dev";
-const idToken = localStorage.getItem('idToken');
-const userId = localStorage.getItem('email');
+    <button id="logoutBtn">Logout</button>
 
-if (!idToken || !userId) {
-  alert('Not logged in');
-  window.location.href = 'login.html';
-}
+    <div style="margin-top:12px;">
+      <input type="file" id="fileInput" />
+      <button id="uploadBtn" style="margin-top:8px;">Upload</button>
+    </div>
 
-// Logout
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  localStorage.removeItem('idToken');
-  localStorage.removeItem('email');
-  window.location.href = 'login.html';
-});
+    <p style="margin-top:12px;"><a href="dashboard.html">Go to Dashboard</a></p>
+  </div>
 
-// Convert file to base64
-async function toBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = error => reject(error);
-  });
-}
+  <script>
+  const API_BASE = "https://yn2y9x0yi5.execute-api.us-east-1.amazonaws.com/dev";
+  const idToken = localStorage.getItem('idToken');
+  const userId = localStorage.getItem('email');
 
-// Upload file
-document.getElementById('uploadBtn').addEventListener('click', async () => {
-  const file = document.getElementById('fileInput').files[0];
-  if (!file) return alert('Select a file');
-  
-  const fileContent = await toBase64(file);
-
-  try {
-    const res = await fetch(`${API_BASE}/upload`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({ userId, fileName: file.name, fileContent })
-    });
-
-    const data = await res.json();
-    alert(data.message || data.error);
-  } catch (err) {
-    console.error(err);
-    alert('Error uploading file');
+  if (!idToken || !userId) {
+    alert('Not logged in');
+    window.location.href = 'login.html';
   }
-});
-</script>
+
+  // Logout
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('idToken');
+    localStorage.removeItem('email');
+    window.location.href = 'login.html';
+  });
+
+  // Convert file to base64
+  async function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  // Upload file
+  document.getElementById('uploadBtn').addEventListener('click', async () => {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) return alert('Select a file');
+    
+    const fileContent = await toBase64(file);
+
+    try {
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ userId, fileName: file.name, fileContent })
+      });
+
+      const data = await res.json();
+      alert(data.message || data.error);
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading file');
+    }
+  });
+  </script>
 </body>
 </html>
