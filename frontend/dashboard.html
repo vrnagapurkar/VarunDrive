@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard - VarunDrive</title>
+</head>
+<body>
+<h1>Dashboard - VarunDrive</h1>
+
+<button id="logoutBtn">Logout</button>
+<button id="refreshBtn">Refresh Files</button>
+
+<h2>Your Files</h2>
+<ul id="fileList"></ul>
+
+<p><a href="upload.html">Upload New File</a></p>
+
+<script>
+const API_BASE = "https://yn2y9x0yi5.execute-api.us-east-1.amazonaws.com/dev";
+const idToken = localStorage.getItem('idToken');
+const userId = localStorage.getItem('email');
+
+// Redirect to login if not logged in
+if (!idToken || !userId) {
+  window.location.href = 'login.html';
+}
+
+// Logout
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  localStorage.removeItem('idToken');
+  localStorage.removeItem('email');
+  window.location.href = 'login.html';
+});
+
+// Convert base64 → Blob
+function base64ToBlob(base64) {
+  const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  return new Blob([bytes]);
+}
+
+// Load files from list Lambda (GET)
+async function loadFiles() {
+  try {
+    const res = await fetch(`${API_BASE}/list?userId=${encodeURIComponent(userId)}`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${idToken}` }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const ul = document.getElementById('fileList');
+    ul.innerHTML = '';
+
+    if (!data.files || data.files.length === 0) {
+      ul.innerHTML = '<li>No files uploaded yet.</li>';
+      return;
+    }
+
+    data.files.forEach(file => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#';
+      a.textContent = file.fileName;
+
+      // Click to download
+      a.addEventListener('click', async () => {
+        try {
+          const downloadRes = await fetch(`${API_BASE}/download?userId=${encodeURIComponent(userId)}&fileId=${file.fileId}`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          });
+          if (!downloadRes.ok) throw new Error(`HTTP ${downloadRes.status}`);
+          const fileData = await downloadRes.json();
+
+          if (fileData.error) return alert(fileData.error);
+
+          const blob = base64ToBlob(fileData.fileContent);
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = fileData.fileName;
+          link.click();
+        } catch (err) {
+          console.error("Download error:", err);
+          alert("Failed to download file.");
+        }
+      });
+
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+
+  } catch (err) {
+    console.error("Load files error:", err);
+    alert("Failed to load files.");
+  }
+}
+
+// Refresh button
+document.getElementById('refreshBtn').addEventListener('click', loadFiles);
+
+// Initial load
+window.onload = loadFiles;
+</script>
+</body>
+</html>

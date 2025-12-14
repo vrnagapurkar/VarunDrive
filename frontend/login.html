@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login - VarunDrive</title>
+</head>
+<body>
+<h1>Login</h1>
+<form id="loginForm">
+<input type="email" id="email" placeholder="Email" required/><br/>
+<input type="password" id="password" placeholder="Password" required/><br/>
+<button type="submit">Login</button>
+</form>
+<p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+
+
+<script>
+const API_BASE = "https://yn2y9x0yi5.execute-api.us-east-1.amazonaws.com/dev";
+
+
+document.getElementById('loginForm').addEventListener('submit', async e => {
+e.preventDefault();
+const email = document.getElementById('email').value;
+const password = document.getElementById('password').value;
+
+
+const res = await fetch(`${API_BASE}/login`, {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({ email, password })
+});
+const data = await res.json();
+if (data.tokens && data.tokens.IdToken) {
+localStorage.setItem('idToken', data.tokens.IdToken);
+localStorage.setItem('email', email);
+window.location.href = 'dashboard.html';
+} else {
+alert(data.error);
+}
+});
+</script>
+</body>
+</html>
